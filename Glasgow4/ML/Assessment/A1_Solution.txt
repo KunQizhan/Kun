@@ -1,0 +1,61 @@
+1, (a):
+
+It will fit a single straight line that minimize overall squared error across all data points. Since there are two distinct bands with different slopes, the fitted line will represent a compromise between them, that means passing somewhere in the middle.
+
+1, (a)(i): for lengths between 3–5mm
+
+This resulting model would saffer from systematic error since this single line can’t capture both trends at the same time, so it would consistently underestimate wingspan for insects following the steeper band and overestimate for those following the shallower band. But overall, this resulting model would be moderately useful.
+
+1, (a)(ii): for lengths <3mm
+
+Its prediction’s reliability would be less since there are no observed data, However, looking at the left portions of length data (around 3-3.25mm), two bands appear relatively close together. This suggests that extrapolation error might not be too large, and that resulting model would be quite uncertain because we can’t know which subpopulation we are predicting for.
+
+1, (a)(iii): for lengths >5mm
+
+Its prediction’s reliability would be least useful. At the rigt side of the data (around 4-5mm), the two bands have already diverged significantly, with wingspan differences exceeding 1.5mm. Continuing to extrapolate right forward would amplify this problem, so the resulting model would be highly unreliable as the compromise line falls increasingly far from either actual trend.
+
+1, (b):
+
+It would likely provide limited improvement because it can fit a curved line between two bands, reducing more error slightly compared to a straight compromise line. But the question is two distinct subpopulations, and they follow their own approximately linear trend, Additionally, it may be overfitting, this model would be capturing noise rather than the true underlying structure of two separate populations.
+
+1, (c):
+
+It would likely not perform much better. While it could learn complex non-linear functions, the core problem is that we have two separate subpopulations mixed, not a single non-linear relationship. The network only receives length as input, so for any given length value, it cannot determine the question for an insect belongs to which subpopulation.
+
+1, (d):
+
+Posterior would not be multi-modal. Because it is still Gaussian with Gaussian likelihood and Gaussian prior which is always uni-modal. Bayesian model assumes a single linear relationship, so the posterior represents uncertainty about the parameters of one line, not the possibility of two different lines.
+
+This model will be more useful than maximum likelihood because it provides uncertainty estimates. But it is still a compromise line between two bands, The posterior uncertainty reflects parameter estimation noise rather than the true structural uncertainty of having two subpopulations.
+
+1, (e):
+
+Mixture of Gaussians likelihood will work well because it directly models the two subpopulations. It assumes each observation comes from one of two Gaussians, each with its own linear relationship. This shows the true data structure where insects from different hatching seasons follow different trends.
+
+Different likelihood choices significantly impact posterior computation difficulty. Gaussian likelihood with Gaussian prior yields to a Gaussian posterior with a closed-form solution, making inference straightforward. However, mixture likelihood has not closed-form posterior and results in complex geometry.
+
+EM algorithm which estimates component assignments and parameters until convergence iteratively.
+
+2, (a):
+
+It would still work because it treats all data points equally, so it doesn't consider that older measurements are noisier. A better solution would be to give weight points based on their measurement reliability.
+
+2, (b):
+
+The noisy historical data would pull the fitted line away from the true trend, making predictions less accurate. And this effect depends on the dataset size which has fewer data points, like every 4 years per measurement, each noisy measurement has more influence. With every year per measurement, averaging across multiple points would reduce the impact of individual measurement errors.
+
+ 
+
+ 
+
+2, (c):
+
+It can be adapted by modeling noise as a function of year: σ(x) instead of fixed σ. It would consider varying reliability by giving more weight to accurate recent measurements. This requires numerical optimization methods like gradient descent since there's no closed-form solution. In that way, the model would automatically weight data appropriately and wouldn't be influenced by noisy historical points and would produce more accurate predictions.
+
+2, (d):
+
+It would be harder to overfitting. Although more parameters make the varying noise model more complex, it can correctly consider for data reliability with lower weight noisy historical measurements and will not try to fit the noise in old data too much. In contrast, the fixed noise model treats all points equally and might be overfit to historical noise.
+
+2, (e):
+
+Yes, it would naturally cover uncertainty about both the trend parameters and the noise structure, providing more reliable predictions with appropriate confidence intervals that consider with varying measurement accuracy. The Bayesian approach will also be robuster by regularizing priors, preventing overfitting. However, its computation is more expensive.
