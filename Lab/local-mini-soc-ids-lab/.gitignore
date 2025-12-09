@@ -1,0 +1,20 @@
+# 不要把 ISO、虚拟机镜像、大 PCAP 推上 GitHub
+*.iso
+*.vdi
+*.vmdk
+*.ova
+*.ovf
+*.pcap
+*.pcapng
+
+# 日志文件（将来 SOC 产生的日志只保留样例）
+*.log
+
+# Windows 系统垃圾
+Thumbs.db
+Desktop.ini
+
+# 编辑器缓存
+.vscode/
+.idea/
+*.swp
