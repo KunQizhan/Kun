@@ -147,11 +147,6 @@
             animation: shake 0.4s ease-in-out;
         }
 
-        .card.timeout {
-            border-color: var(--warning);
-            box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
-        }
-
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-6px); }
@@ -183,37 +178,7 @@
             border-radius: 50%;
         }
 
-        /* Timer */
-        .timer {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0.8rem;
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
 
-        .timer.warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-        .timer.danger { background: rgba(239, 68, 68, 0.2); color: var(--error); animation: pulse 0.5s infinite; }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .timer-ring {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 2px solid currentColor;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
 
         .question {
             font-size: 1.2rem;
@@ -319,7 +284,7 @@
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
-        .feedback.incorrect, .feedback.timeout {
+        .feedback.incorrect {
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
@@ -331,7 +296,7 @@
         }
 
         .feedback.correct .label { color: var(--success); }
-        .feedback.incorrect .label, .feedback.timeout .label { color: var(--error); }
+        .feedback.incorrect .label { color: var(--error); }
 
         .expected-answer {
             background: rgba(0, 0, 0, 0.2);
@@ -533,10 +498,6 @@
         <div class="card" id="card">
             <div class="question-header">
                 <div class="question-label">Question <span id="q-number"></span></div>
-                <div class="timer" id="timer">
-                    <div class="timer-ring"></div>
-                    <span id="timer-text">30s</span>
-                </div>
             </div>
             <div class="direction-tag" id="direction-tag">Direction 1</div>
             <div class="question" id="question"></div>
@@ -699,9 +660,7 @@
             totalResets: 0,
             currentStreak: 0,
             bestStreak: 0,
-            directionStats: {},
-            timerInterval: null,
-            timeRemaining: 0
+            directionStats: {}
         };
 
         let isChecked = false;
@@ -735,7 +694,7 @@
             
             directions.forEach((dir, i) => {
                 if (!state.directionStats[i]) {
-                    state.directionStats[i] = { attempts: 0, correct: 0, wrong: 0, timeouts: 0, resets: 0, completions: 0 };
+                    state.directionStats[i] = { attempts: 0, correct: 0, wrong: 0, resets: 0, completions: 0 };
                 }
             });
 
@@ -858,17 +817,11 @@
             document.getElementById('q-number').textContent = `#${state.currentCard.originalIndex + 1}`;
             document.getElementById('question').innerHTML = state.currentCard.q.replace(/:/g, ':<strong>').replace(/$/, '</strong>');
 
-            const wordCount = state.currentCard.a.split(/\s+/).length;
-            const timeLimit = wordCount <= 15 ? 30 : 60;
-            startTimer(timeLimit);
-
             setTimeout(() => input.focus(), 50);
             updateUI();
         }
 
         function completeDirection() {
-            stopTimer();
-            
             const dirIdx = state.directionOrder[state.currentDirIndex];
             state.directionStats[dirIdx].completions++;
             
@@ -899,48 +852,6 @@
             saveData();
         }
 
-        // ========== TIMER ==========
-        function startTimer(seconds) {
-            state.timeRemaining = seconds;
-            updateTimerDisplay();
-            
-            clearInterval(state.timerInterval);
-            state.timerInterval = setInterval(() => {
-                state.timeRemaining--;
-                updateTimerDisplay();
-                
-                if (state.timeRemaining <= 0) {
-                    clearInterval(state.timerInterval);
-                    handleTimeout();
-                }
-            }, 1000);
-        }
-
-        function stopTimer() { clearInterval(state.timerInterval); }
-
-        function updateTimerDisplay() {
-            const timerEl = document.getElementById('timer');
-            document.getElementById('timer-text').textContent = `${state.timeRemaining}s`;
-            
-            const wordCount = state.currentCard ? state.currentCard.a.split(/\s+/).length : 15;
-            const limit = wordCount <= 15 ? 30 : 60;
-            const ratio = state.timeRemaining / limit;
-            
-            timerEl.classList.remove('warning', 'danger');
-            if (ratio <= 0.25) timerEl.classList.add('danger');
-            else if (ratio <= 0.5) timerEl.classList.add('warning');
-        }
-
-        function handleTimeout() {
-            if (isChecked) return;
-            
-            const dirIdx = state.currentCard.directionId;
-            state.directionStats[dirIdx].timeouts++;
-            state.directionStats[dirIdx].attempts++;
-            
-            showFeedback('timeout', '⏱ Time\'s up!', true);
-        }
-
         // ========== ANSWER CHECKING ==========
         function normalizeAnswer(str) {
             return str.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -951,8 +862,6 @@
                 showNextCard();
                 return;
             }
-
-            stopTimer();
 
             const userAnswer = normalizeAnswer(document.getElementById('answer-input').value);
             const correctAnswer = normalizeAnswer(state.currentCard.a);
@@ -1016,8 +925,6 @@
         }
 
         function showAnswer() {
-            stopTimer();
-            
             const dirIdx = state.currentCard.directionId;
             state.directionStats[dirIdx].wrong++;
             state.directionStats[dirIdx].attempts++;
@@ -1034,7 +941,7 @@
         function renderAnalytics() {
             const container = document.getElementById('direction-stats');
             container.innerHTML = directions.map((dir, idx) => {
-                const stats = state.directionStats[idx] || { attempts: 0, correct: 0, wrong: 0, timeouts: 0, resets: 0, completions: 0 };
+                const stats = state.directionStats[idx] || { attempts: 0, correct: 0, wrong: 0, resets: 0, completions: 0 };
                 const accuracy = stats.attempts > 0 ? Math.round((stats.correct / stats.attempts) * 100) : 0;
                 
                 let accClass = 'medium';
@@ -1048,7 +955,7 @@
                             <span class="direction-stat-accuracy ${accClass}">${stats.attempts > 0 ? accuracy + '%' : '—'}</span>
                         </div>
                         <div class="direction-stat-details">
-                            ${stats.correct}✓ ${stats.wrong}✗ ${stats.timeouts}⏱ · ${stats.resets} resets · ${stats.completions}x done
+                            ${stats.correct}✓ ${stats.wrong}✗ · ${stats.resets} resets · ${stats.completions}x done
                         </div>
                     </div>
                 `;
